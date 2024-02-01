@@ -8,7 +8,13 @@
 #include <fcntl.h>
 
 #define MAX_INPUT_SIZE 1024
+ char *input_file = NULL;
+char *output_file = NULL;
+
 int main() {
+    //iniatlize input and output files for i/o redirection 
+   
+
     while (1) {
         char *user = getenv("USER"); //gets user info
         char *machine = getenv("MACHINE"); //gets machine info
@@ -94,7 +100,11 @@ int main() {
 
 
             args[args_count] = NULL;
-
+            //checks to see if the functions is doing i/o redirection 
+            if (args[1] == ">" || "<")
+            {
+                ioRedirection (args);
+            }
             if (execvp(args[0], args) == -1) {
                 printf("%s: Command not found.\n", input);
                 return 1;
@@ -174,4 +184,26 @@ void free_tokens(tokenlist *tokens) {
         free(tokens->items[i]);
     free(tokens->items);
     free(tokens);
+}
+
+
+void ioRedirection(char *args[]) {
+    for (int i = 0; args[i] != NULL; i++)
+    {
+        if (args[i] == "<")
+        {
+            input_file = args[i+1];
+        }
+        else if (args[i] == ">")
+        {
+            output_file = args[i+1]; 
+        }
+    }
+    int input_fd = open(input_file , O_RDONLY);
+    if (input_fd < 0) 
+    {
+                perror("File either does not exist or error opening input file");
+                exit(EXIT_FAILURE);
+            } 
+
 }
