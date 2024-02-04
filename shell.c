@@ -13,6 +13,7 @@ char *input_file = NULL;
 char *output_file = NULL;
 
 void ioRedirection(char *args[]);
+void cdCom(char *path); 
 
 int main() {
    bool redirect = false; 
@@ -93,6 +94,18 @@ int main() {
                         printf("%s\n",  newpath);
                     }
                 }
+                else if (strcmp(tokens->items[i], "cd") == 0 )
+                {
+                    if (tokens->size == 1)
+                     {
+                        cdCom(NULL);
+                     }      
+                     else if (tokens->size == 2) {
+                        cdCom(tokens->items[1]);
+                    } else {
+                fprintf(stderr, "cd: Too many arguments\n");
+                    }
+                }
                 else 
                 {
                     args[args_count++] = tokens->items[i];
@@ -102,13 +115,33 @@ int main() {
 
 
             args[args_count] = NULL;
+            
             //checks to see if the functions is doing i/o redirection 
             if (strcmp(args[1], ">") == 0 || strcmp(args[1], "<") == 0)
             {
                 //redirect = true; 
-                ioRedirection (args);
+                char **args_copy = malloc((sizeof(char *) * (sizeof(args) / sizeof(args[0]))) + 1);
+                int copy_index = 0; 
+                for (int i = 0; args[i] != NULL; i++) 
+                {
+                    if (strcmp(args[i], "<") != 0 && strcmp(args[i], ">") != 0)
+                    {
+                        args_copy[copy_index++] = args[i];
+                    }
+                 }
+                 args_copy[copy_index] = NULL;
+                 for(int i = 0; args_copy[i] != NULL; i++)
+                 {
+                    printf("args_copy[%d]: %s\n", i, args_copy[i]);
+                 }
+                 ioRedirection (args);
+                if (execvp(args[0], args_copy) == -1 ) {
+                printf("%s: Command not found.\n", input);
+                free(args_copy);
+                return 1;
             }
-            if (execvp(args[0], args) == -1 ) {
+            }
+            else if (execvp(args[0], args) == -1 ) {
                 printf("%s: Command not found.\n", input);
                 return 1;
             }
@@ -230,4 +263,17 @@ void ioRedirection(char *args[]) {
      close(output_fd);
     }
 
+}
+
+void cdCom(char *path)
+{
+    // if no path is provided go to home
+    // but if path is provided make the dest path to the path provided
+     char *dest = (path == NULL) ? getenv("HOME") : path;
+
+     // if the path does not exist, error message
+     // if so continue to path 
+     if (chdir(dest) != 0) {
+        perror("Path does not exist");
+    }
 }
